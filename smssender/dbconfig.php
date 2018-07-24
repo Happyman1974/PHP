@@ -1,0 +1,9 @@
+<?php
+$dbhost='localhost';
+$dbuser='root';
+$dbpass='pass';
+$dbname='asterisk';
+$goip_addr='http://1.1.1.1';
+$goip_user='admin';
+$goip_password='pass';
+?>
