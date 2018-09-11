@@ -1,0 +1,56 @@
+<?php
+/*
+*
+* Парсим конфиги телефонов Yealink T23 и вносим значения: 
+* МАК и экстеншен в базу для provisioning
+*  для выборки запускаем команду :
+*  grep -lr --null -P '(?<!\d)[1][0][.][1][.][2][.][5][6](?!\d)' /tftpboot/* | xargs -0r cp -t /home/01
+*
+*  php /var/www/html/provisioning/parser.php
+*/
+include('connect.php');
+
+if ($handle = opendir('/home/01')) {
+    echo "Дескриптор каталога: $handle\n";
+    echo "Файлы:\n";
+
+    while (false !== ($file = readdir($handle))) { 
+        echo "$file\n";
+
+			$txt_file    = file_get_contents("/tftpboot/$file");
+			$rows        = explode("\n", $txt_file);
+
+
+			foreach($rows as $row => $data)
+			{
+				//get row data
+				$row_data = explode('=', $data);
+
+				$info[$row]['id']           = $row_data[0];
+				
+				if ( $info[$row]['id'] == 'account.1.auth_name ' ) {
+					if ( isset($row_data[1]) )  {  
+						$info[$row]['name'] = $row_data[1];
+					//	echo ' NAME: ' . $info[$row]['name'] . '<br />';
+						
+						$extension=trim($info[$row]['name']);
+						$mac=str_replace('.cfg','',$file);//   '001565bcfa24.cfg';
+						$model='Yealink T23';
+						$server='10.1.2.56';
+						$time='';
+						$tserver='ntp.tbm.ru';
+						$prefix='';
+						
+						$sql="INSERT INTO `provisioning` VALUES('','$extension','$mac','$model','$server','$time','$tserver','$prefix');";
+					//	echo "sql = " . $sql . PHP_EOL;
+						$a_sql=mysqli_query($con1, $sql);
+						if($a_sql)
+							echo ' SUCCESS: ' . $info[$row]['name'] . '\n';
+						
+						
+					}
+				}
+			}
+    }
+    closedir($handle); 
+}
